@@ -24,3 +24,15 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+@app.post("/projects", response_model=schemas.ProjectOut)
+def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)):
+    db_project = models.Project(
+        title=project.title,
+        deadline=project.deadline,
+        created_by=project.created_by
+    )
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project
