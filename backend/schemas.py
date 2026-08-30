@@ -30,3 +30,24 @@ class ProjectOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TaskCreate(BaseModel):
+    project_id: uuid.UUID
+    title: str
+    description: str | None = None
+    assigned_to: uuid.UUID | None = None
+    deadline: date | None = None
+    estimated_effort: int | None = None
+
+class TaskOut(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    title: str
+    description: str | None = None
+    assigned_to: uuid.UUID | None = None
+    status: str
+    deadline: date | None = None
+    estimated_effort: int | None = None
+
+    class Config:
+        from_attributes = True

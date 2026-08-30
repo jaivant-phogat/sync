@@ -36,3 +36,18 @@ def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(db_project)
     return db_project
+
+@app.post("/tasks", response_model=schemas.TaskOut)
+def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
+    db_task = models.Task(
+        project_id=task.project_id,
+        title=task.title,
+        description=task.description,
+        assigned_to=task.assigned_to,
+        deadline=task.deadline,
+        estimated_effort=task.estimated_effort
+    )
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
