@@ -62,3 +62,14 @@ class TaskDependencyOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ProjectMemberCreate(BaseModel):
+    project_id: uuid.UUID
+    user_id: uuid.UUID
+
+class ProjectMemberOut(BaseModel):
+    project_id: uuid.UUID
+    user_id: uuid.UUID
+
+    class Config:
+        from_attributes = True

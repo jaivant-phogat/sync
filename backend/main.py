@@ -62,3 +62,14 @@ def create_task_dependency(dep: schemas.TaskDependencyCreate, db: Session = Depe
     db.commit()
     db.refresh(db_dep)
     return db_dep
+
+@app.post("/project_members", response_model=schemas.ProjectMemberOut)
+def add_project_member(member: schemas.ProjectMemberCreate, db: Session = Depends(get_db)):
+    db_member = models.ProjectMember(
+        project_id=member.project_id,
+        user_id=member.user_id
+    )
+    db.add(db_member)
+    db.commit()
+    db.refresh(db_member)
+    return db_member
