@@ -51,3 +51,14 @@ class TaskOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TaskDependencyCreate(BaseModel):
+    task_id: uuid.UUID
+    depends_on_task_id: uuid.UUID
+
+class TaskDependencyOut(BaseModel):
+    task_id: uuid.UUID
+    depends_on_task_id: uuid.UUID
+
+    class Config:
+        from_attributes = True

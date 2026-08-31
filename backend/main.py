@@ -51,3 +51,14 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_task)
     return db_task
+
+@app.post("/task_dependencies", response_model=schemas.TaskDependencyOut)
+def create_task_dependency(dep: schemas.TaskDependencyCreate, db: Session = Depends(get_db)):
+    db_dep = models.TaskDependency(
+        task_id=dep.task_id,
+        depends_on_task_id=dep.depends_on_task_id
+    )
+    db.add(db_dep)
+    db.commit()
+    db.refresh(db_dep)
+    return db_dep
