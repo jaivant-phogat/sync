@@ -82,3 +82,13 @@ def get_project_risk(project_id: str, db: Session = Depends(get_db)):
     if not result:
         return {"error": "Project not found"}
     return result
+
+import interventions
+
+@app.get("/projects/{project_id}/intervention")
+def get_project_intervention(project_id: str, db: Session = Depends(get_db)):
+    risk_data = risk_engine.calculate_risk(project_id, db)
+    if not risk_data:
+        return {"error": "Project not found"}
+    result = interventions.generate_intervention(risk_data)
+    return {**risk_data, **result}
