@@ -73,3 +73,12 @@ def add_project_member(member: schemas.ProjectMemberCreate, db: Session = Depend
     db.commit()
     db.refresh(db_member)
     return db_member
+
+import risk_engine
+
+@app.get("/projects/{project_id}/risk")
+def get_project_risk(project_id: str, db: Session = Depends(get_db)):
+    result = risk_engine.calculate_risk(project_id, db)
+    if not result:
+        return {"error": "Project not found"}
+    return result
