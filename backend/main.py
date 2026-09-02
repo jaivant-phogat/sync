@@ -6,6 +6,16 @@ import schemas
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 def get_db():
     db = SessionLocal()
     try:
@@ -92,3 +102,13 @@ def get_project_intervention(project_id: str, db: Session = Depends(get_db)):
         return {"error": "Project not found"}
     result = interventions.generate_intervention(risk_data)
     return {**risk_data, **result}
+
+@app.get("/projects/{project_id}", response_model=schemas.ProjectDetail)
+def get_project(project_id: str, db: Session = Depends(get_db)):
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    return project
+
+@app.get("/projects/{project_id}/tasks", response_model=list[schemas.TaskOut])
+def get_project_tasks(project_id: str, db: Session = Depends(get_db)):
+    tasks = db.query(models.Task).filter(models.Task.project_id == project_id).all()
+    return tasks

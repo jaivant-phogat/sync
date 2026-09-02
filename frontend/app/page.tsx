@@ -1,69 +1,167 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+import { useEffect, useState } from "react";
+
+const API_BASE = "http://127.0.0.1:8000";
+const PROJECT_ID = "4cb8d075-d90e-4230-b400-a46c93d886ac";
+
+type Project = {
+  id: string;
+  title: string;
+  deadline: string | null;
+  status: string;
+};
+
+type Task = {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  deadline: string | null;
+  estimated_effort: number | null;
+};
+
+type RiskData = {
+  risk_score: number;
+  status: string;
+  reasons: string[];
+};
+
+type InterventionData = RiskData & {
+  generated_text: string;
+  recommendation: string | null;
+};
+
+const statusColor: Record<string, string> = {
+  healthy: "#1F5C57",
+  at_risk: "#C77D22",
+  critical: "#A63D2F",
+};
+
+export default function Dashboard() {
+  const [project, setProject] = useState<Project | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [intervention, setIntervention] = useState<InterventionData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const [projectRes, tasksRes, interventionRes] = await Promise.all([
+        fetch(`${API_BASE}/projects/${PROJECT_ID}`),
+        fetch(`${API_BASE}/projects/${PROJECT_ID}/tasks`),
+        fetch(`${API_BASE}/projects/${PROJECT_ID}/intervention`),
+      ]);
+      setProject(await projectRes.json());
+      setTasks(await tasksRes.json());
+      setIntervention(await interventionRes.json());
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <main style={{ background: "#FAFAF7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ fontFamily: "Inter, sans-serif", color: "#1C1E21" }}>Loading project...</p>
       </main>
-    </div>
+    );
+  }
+
+  const riskColor = intervention ? statusColor[intervention.status] ?? "#1C1E21" : "#1C1E21";
+
+  return (
+    <main
+      style={{
+        background: "#FAFAF7",
+        minHeight: "100vh",
+        color: "#1C1E21",
+        fontFamily: "Inter, sans-serif",
+        padding: "64px 48px",
+      }}
+    >
+      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <p style={{ fontSize: 14, color: "#6B6B63", marginBottom: 8 }}>SYNC</p>
+        <h1
+          style={{
+            fontFamily: "'Source Serif 4', Georgia, serif",
+            fontSize: 40,
+            fontWeight: 600,
+            marginBottom: 4,
+          }}
+        >
+          {project?.title}
+        </h1>
+        <p style={{ color: "#6B6B63", marginBottom: 40 }}>
+          Due {project?.deadline ?? "no deadline set"}
+        </p>
+
+        <section style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 24 }}>
+          <span
+            style={{
+              fontFamily: "'Source Serif 4', Georgia, serif",
+              fontSize: 64,
+              fontWeight: 600,
+              color: riskColor,
+              lineHeight: 1,
+            }}
+          >
+            {intervention?.risk_score}
+          </span>
+          <span style={{ fontSize: 18, color: riskColor, textTransform: "capitalize" }}>
+            {intervention?.status.replace("_", " ")}
+          </span>
+        </section>
+
+        {intervention && intervention.reasons.length > 0 && (
+          <ul style={{ marginBottom: 32, paddingLeft: 20, color: "#4A4A45" }}>
+            {intervention.reasons.map((reason, i) => (
+              <li key={i} style={{ marginBottom: 4 }}>{reason}</li>
+            ))}
+          </ul>
+        )}
+
+        {intervention?.generated_text && (
+          <div
+            style={{
+              borderLeft: `3px solid ${riskColor}`,
+              paddingLeft: 20,
+              marginBottom: 48,
+              color: "#2A2A26",
+              lineHeight: 1.6,
+            }}
+          >
+            {intervention.generated_text}
+          </div>
+        )}
+
+        <h2 style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 22, marginBottom: 16 }}>
+          Tasks
+        </h2>
+        <div style={{ borderTop: "1px solid #E8E4D9" }}>
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "16px 0",
+                borderBottom: "1px solid #E8E4D9",
+              }}
+            >
+              <div>
+                <p style={{ fontWeight: 500 }}>{task.title}</p>
+                {task.description && (
+                  <p style={{ color: "#6B6B63", fontSize: 14, marginTop: 2 }}>{task.description}</p>
+                )}
+              </div>
+              <div style={{ textAlign: "right", fontSize: 14, color: "#6B6B63" }}>
+                <p style={{ textTransform: "capitalize" }}>{task.status.replace("_", " ")}</p>
+                <p>{task.deadline}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
   );
 }

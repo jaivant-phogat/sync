@@ -73,3 +73,12 @@ class ProjectMemberOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ProjectDetail(BaseModel):
+    id: uuid.UUID
+    title: str
+    deadline: date | None = None
+    status: str
+
+    class Config:
+        from_attributes = True
