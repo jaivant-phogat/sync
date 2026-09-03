@@ -82,3 +82,8 @@ class ProjectDetail(BaseModel):
 
     class Config:
         from_attributes = True
+
+class QuickProjectCreate(BaseModel):
+    creator_name: str
+    title: str
+    deadline: date | None = None

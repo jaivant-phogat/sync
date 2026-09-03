@@ -112,3 +112,20 @@ def get_project(project_id: str, db: Session = Depends(get_db)):
 def get_project_tasks(project_id: str, db: Session = Depends(get_db)):
     tasks = db.query(models.Task).filter(models.Task.project_id == project_id).all()
     return tasks
+
+@app.get("/projects", response_model=list[schemas.ProjectDetail])
+def list_projects(db: Session = Depends(get_db)):
+    return db.query(models.Project).all()
+
+@app.post("/quick-project", response_model=schemas.ProjectOut)
+def quick_create_project(payload: schemas.QuickProjectCreate, db: Session = Depends(get_db)):
+    db_user = models.User(name=payload.creator_name, email=f"{payload.creator_name.lower().replace(' ', '')}@demo.sync", role="teacher")
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    db_project = models.Project(title=payload.title, deadline=payload.deadline, created_by=db_user.id)
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project

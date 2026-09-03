@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
 const API_BASE = "http://127.0.0.1:8000";
-const PROJECT_ID = "4cb8d075-d90e-4230-b400-a46c93d886ac";
 
 type Project = {
   id: string;
@@ -39,17 +39,21 @@ const statusColor: Record<string, string> = {
 };
 
 export default function Dashboard() {
+  const params = useParams();
+  const projectId = params.id as string;
+
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [intervention, setIntervention] = useState<InterventionData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!projectId) return;
     async function loadData() {
       const [projectRes, tasksRes, interventionRes] = await Promise.all([
-        fetch(`${API_BASE}/projects/${PROJECT_ID}`),
-        fetch(`${API_BASE}/projects/${PROJECT_ID}/tasks`),
-        fetch(`${API_BASE}/projects/${PROJECT_ID}/intervention`),
+        fetch(`${API_BASE}/projects/${projectId}`),
+        fetch(`${API_BASE}/projects/${projectId}/tasks`),
+        fetch(`${API_BASE}/projects/${projectId}/intervention`),
       ]);
       setProject(await projectRes.json());
       setTasks(await tasksRes.json());
@@ -57,7 +61,7 @@ export default function Dashboard() {
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [projectId]);
 
   if (loading) {
     return (
