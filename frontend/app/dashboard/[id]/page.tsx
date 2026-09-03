@@ -47,21 +47,55 @@ export default function Dashboard() {
   const [intervention, setIntervention] = useState<InterventionData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [showForm, setShowForm] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [taskDeadline, setTaskDeadline] = useState("");
+  const [taskEffort, setTaskEffort] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function loadData() {
+    const [projectRes, tasksRes, interventionRes] = await Promise.all([
+      fetch(`${API_BASE}/projects/${projectId}`),
+      fetch(`${API_BASE}/projects/${projectId}/tasks`),
+      fetch(`${API_BASE}/projects/${projectId}/intervention`),
+    ]);
+    setProject(await projectRes.json());
+    setTasks(await tasksRes.json());
+    setIntervention(await interventionRes.json());
+    setLoading(false);
+  }
+
   useEffect(() => {
     if (!projectId) return;
-    async function loadData() {
-      const [projectRes, tasksRes, interventionRes] = await Promise.all([
-        fetch(`${API_BASE}/projects/${projectId}`),
-        fetch(`${API_BASE}/projects/${projectId}/tasks`),
-        fetch(`${API_BASE}/projects/${projectId}/intervention`),
-      ]);
-      setProject(await projectRes.json());
-      setTasks(await tasksRes.json());
-      setIntervention(await interventionRes.json());
-      setLoading(false);
-    }
     loadData();
   }, [projectId]);
+
+  async function handleAddTask(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await fetch(`${API_BASE}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: projectId,
+          title: taskTitle,
+          description: taskDescription || null,
+          deadline: taskDeadline || null,
+          estimated_effort: taskEffort ? parseInt(taskEffort) : null,
+        }),
+      });
+      setTaskTitle("");
+      setTaskDescription("");
+      setTaskDeadline("");
+      setTaskEffort("");
+      setShowForm(false);
+      await loadData();
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -138,10 +172,91 @@ export default function Dashboard() {
           </div>
         )}
 
-        <h2 style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 22, marginBottom: 16 }}>
-          Tasks
-        </h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
+          <h2 style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 22 }}>
+            Tasks
+          </h2>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            style={{
+              background: "none",
+              border: "1px solid #E8E4D9",
+              borderRadius: 4,
+              padding: "6px 14px",
+              fontSize: 14,
+              cursor: "pointer",
+              color: "#1C1E21",
+              fontFamily: "Inter, sans-serif",
+            }}
+          >
+            {showForm ? "Cancel" : "+ Add task"}
+          </button>
+        </div>
+
+        {showForm && (
+          <form
+            onSubmit={handleAddTask}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              padding: 20,
+              border: "1px solid #E8E4D9",
+              borderRadius: 6,
+              marginBottom: 24,
+            }}
+          >
+            <input
+              required
+              placeholder="Task title"
+              value={taskTitle}
+              onChange={(e) => setTaskTitle(e.target.value)}
+              style={{ padding: "8px 10px", border: "1px solid #E8E4D9", borderRadius: 4, fontSize: 14, fontFamily: "Inter, sans-serif" }}
+            />
+            <input
+              placeholder="Description (optional)"
+              value={taskDescription}
+              onChange={(e) => setTaskDescription(e.target.value)}
+              style={{ padding: "8px 10px", border: "1px solid #E8E4D9", borderRadius: 4, fontSize: 14, fontFamily: "Inter, sans-serif" }}
+            />
+            <div style={{ display: "flex", gap: 12 }}>
+              <input
+                type="date"
+                value={taskDeadline}
+                onChange={(e) => setTaskDeadline(e.target.value)}
+                style={{ flex: 1, padding: "8px 10px", border: "1px solid #E8E4D9", borderRadius: 4, fontSize: 14, fontFamily: "Inter, sans-serif" }}
+              />
+              <input
+                type="number"
+                placeholder="Est. hours"
+                value={taskEffort}
+                onChange={(e) => setTaskEffort(e.target.value)}
+                style={{ width: 120, padding: "8px 10px", border: "1px solid #E8E4D9", borderRadius: 4, fontSize: 14, fontFamily: "Inter, sans-serif" }}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                background: "#1F5C57",
+                color: "#FAFAF7",
+                border: "none",
+                borderRadius: 4,
+                padding: "10px 20px",
+                fontSize: 14,
+                cursor: "pointer",
+                alignSelf: "flex-start",
+              }}
+            >
+              {submitting ? "Adding..." : "Add task"}
+            </button>
+          </form>
+        )}
+
         <div style={{ borderTop: "1px solid #E8E4D9" }}>
+          {tasks.length === 0 && (
+            <p style={{ color: "#6B6B63", padding: "16px 0" }}>No tasks yet.</p>
+          )}
           {tasks.map((task) => (
             <div
               key={task.id}
