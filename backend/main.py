@@ -129,3 +129,14 @@ def quick_create_project(payload: schemas.QuickProjectCreate, db: Session = Depe
     db.commit()
     db.refresh(db_project)
     return db_project
+
+from fastapi import UploadFile, File
+import extraction
+import io
+
+@app.post("/extract-tasks")
+async def extract_tasks(file: UploadFile = File(...)):
+    file_bytes = io.BytesIO(await file.read())
+    text = extraction.extract_text_from_pdf(file_bytes)
+    result = extraction.extract_tasks_from_text(text)
+    return result
